@@ -18,8 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -38,7 +36,7 @@ import com.example.model.AnalyticsMetric
 import com.example.model.AuditLogEntry
 import com.example.model.PlatformModule
 import com.example.model.PlatformRole
-import com.example.model.PlatformSettingItem
+import com.example.model.PlatformSettingDoc
 import com.example.model.ReleaseEntry
 import com.example.model.SupportTicket
 import com.example.model.Vendor
@@ -50,6 +48,7 @@ import com.example.ui.components.VendorTable
 import com.example.ui.theme.CheckboxEmerald
 import com.example.ui.theme.ControlBorder
 import com.example.ui.theme.OperationalGreen
+import com.example.ui.theme.PrimaryEmerald
 import com.example.ui.theme.RowDivider
 import com.example.ui.theme.SurfaceWhite
 import com.example.ui.theme.TextControl
@@ -61,24 +60,65 @@ import com.example.ui.theme.TextSubtle
 @Composable
 fun SubscriptionsScreen(
     vendors: List<Vendor>,
+    onToggleAutoRenew: (Vendor) -> Unit,
+    onOpenVendorCheckout: (Vendor) -> Unit,
     onOpenVendor: (Vendor) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    PanelCard(modifier = modifier.testTag("subscriptions_screen")) {
-        Text(
-            text = "Subscription portfolio",
-            color = TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(3.dp))
-        Text(
-            text = "Illustrative subscription records",
-            color = TextMuted,
-            fontSize = 11.5.sp
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        VendorTable(vendors = vendors, onOpenVendor = onOpenVendor)
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = modifier.fillMaxWidth().testTag("subscriptions_screen")) {
+        PanelCard {
+            Text(
+                text = "Subscription portfolio & auto-renewals",
+                color = TextPrimary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = "Track remaining subscription days, toggle auto-renewal, or renew vendor modules online.",
+                color = TextMuted,
+                fontSize = 11.5.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            vendors.forEach { v ->
+                val days = v.remainingDays()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        Text(v.name, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "${v.plan} · ${if (days > 0) "$days days remaining" else "Expired"} · ${v.purchasedLicenses} license(s)",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.Switch(
+                            checked = v.autoRenew,
+                            onCheckedChange = { onToggleAutoRenew(v) }
+                        )
+                        OutlinedButton(
+                            onClick = { onOpenVendorCheckout(v) },
+                            shape = RoundedCornerShape(6.dp),
+                            border = BorderStroke(1.dp, ControlBorder),
+                            modifier = Modifier.defaultMinSize(minHeight = 48.dp)
+                        ) {
+                            Text("Renew", color = PrimaryEmerald, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                HorizontalDivider(color = RowDivider, thickness = 1.dp)
+            }
+        }
+
+        PanelCard {
+            Text("Tenant directory snapshot", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            VendorTable(vendors = vendors, onOpenVendor = onOpenVendor)
+        }
     }
 }
 
@@ -105,7 +145,7 @@ fun ModulesScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Inventory2,
                                 contentDescription = null,
-                                tint = TextPrimary,
+                                tint = PrimaryEmerald,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
@@ -137,22 +177,32 @@ fun ModulesScreen(
 @Composable
 fun PlatformUsersScreen(
     roles: List<PlatformRole>,
+    currentUserEmail: String,
+    isSuperAdmin: Boolean,
     modifier: Modifier = Modifier
 ) {
     PanelCard(modifier = modifier.testTag("platform_users_screen")) {
         Text(
-            text = "Platform access directory",
+            text = "Platform access & Google Drive isolation",
             color = TextPrimary,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(3.dp))
         Text(
-            text = "Platform roles are separate from vendor tenant roles.",
+            text = "Registered Super Admin: ${com.example.security.AdminIdentityPolicy.REGISTERED_SUPER_ADMIN_EMAIL} (live login only; zero credentials stored).",
             color = TextMuted,
             fontSize = 11.5.sp
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        InfoNoticeBox(
+            text = if (isSuperAdmin) {
+                "Signed in as Registered Super Admin ($currentUserEmail). Backups use your own Google Drive ($currentUserEmail)."
+            } else {
+                "Signed in as $currentUserEmail. Your workspace and Google Drive backups are isolated to $currentUserEmail — access to the Super Admin's Google Drive is blocked."
+            }
+        )
+        Spacer(modifier = Modifier.height(10.dp))
         roles.forEach { item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -164,7 +214,8 @@ fun PlatformUsersScreen(
                 Text(
                     text = item.title,
                     color = TextSecondary,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
                 )
                 Text(
                     text = item.role,
@@ -195,6 +246,7 @@ fun SupportDeskScreen(
         )
         Spacer(modifier = Modifier.height(6.dp))
         tickets.forEach { ticket ->
+            val code = ticket.ticketCode.ifBlank { ticket.id }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -211,7 +263,7 @@ fun SupportDeskScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${ticket.id} · ${ticket.vendor} · ${ticket.priority}",
+                        text = "$code · ${ticket.vendor} · ${ticket.priority}",
                         color = TextSubtle,
                         fontSize = 10.5.sp
                     )
@@ -228,7 +280,7 @@ fun SupportDeskScreen(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier
                             .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                            .testTag("resolve_ticket_${ticket.id}")
+                            .testTag("resolve_ticket_$code")
                     ) {
                         Text(
                             text = stringResource(R.string.action_resolve),
@@ -376,52 +428,5 @@ fun AuditLogScreen(
                 HorizontalDivider(color = RowDivider, thickness = 1.dp)
             }
         }
-    }
-}
-
-@Composable
-fun SettingsScreen(
-    settings: List<PlatformSettingItem>,
-    onToggleSetting: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    PanelCard(modifier = modifier.testTag("settings_screen")) {
-        Text(
-            text = "Platform settings",
-            color = TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        settings.forEach { item ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp)
-                    .clickable { onToggleSetting(item.key) }
-                    .padding(vertical = 6.dp)
-                    .testTag("setting_row_${item.key}")
-            ) {
-                Checkbox(
-                    checked = item.enabled,
-                    onCheckedChange = { onToggleSetting(item.key) },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = CheckboxEmerald,
-                        checkmarkColor = Color.White,
-                        uncheckedColor = TextMuted
-                    )
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = item.label,
-                    color = TextPrimary,
-                    fontSize = 12.5.sp
-                )
-            }
-            HorizontalDivider(color = RowDivider, thickness = 1.dp)
-        }
-        Spacer(modifier = Modifier.height(14.dp))
-        InfoNoticeBox(text = stringResource(R.string.notice_settings))
     }
 }

@@ -1,0 +1,238 @@
+{
+  "entities": {
+    "Vendor": {
+      "title": "Vendor",
+      "description": "Healthcare tenant organization with contact, subscription, and license telemetry.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "vendorCode": { "type": "string" },
+        "name": { "type": "string" },
+        "city": { "type": "string" },
+        "type": { "type": "string", "enum": ["Hospital", "Laboratory", "Pharmacy", "Clinic"] },
+        "plan": { "type": "string", "enum": ["Enterprise", "Growth", "Starter"] },
+        "status": { "type": "string", "enum": ["Active", "Pending", "Suspended"] },
+        "adminEmail": { "type": "string" },
+        "billingEmail": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "purchasedLicenses": { "type": "integer" },
+        "activeSeats": { "type": "integer" },
+        "autoRenew": { "type": "boolean" },
+        "subscriptionExpiresAtMillis": { "type": "integer" },
+        "assignedModulesCsv": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "vendorCode", "name", "city", "type", "plan", "status",
+        "adminEmail", "billingEmail", "phone", "address",
+        "purchasedLicenses", "activeSeats", "autoRenew", "subscriptionExpiresAtMillis", "assignedModulesCsv",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "PlatformModuleDoc": {
+      "title": "PlatformModuleDoc",
+      "description": "Licensable HealthSuite 360 module with editable pricing and discount.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "moduleCode": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "stage": { "type": "string", "enum": ["Live", "Beta", "Planned"] },
+        "monthlyPrice": { "type": "number" },
+        "annualPrice": { "type": "number" },
+        "currency": { "type": "string" },
+        "discountPercent": { "type": "integer" },
+        "licenseAllEligible": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "moduleCode", "name", "description", "stage",
+        "monthlyPrice", "annualPrice", "currency", "discountPercent",
+        "licenseAllEligible", "isActive", "createdAt", "updatedAt"
+      ]
+    },
+    "ModuleGroupDoc": {
+      "title": "ModuleGroupDoc",
+      "description": "Bundled module group or all-modules licensing package.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "groupCode": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "moduleCodesCsv": { "type": "string" },
+        "bundlePrice": { "type": "number" },
+        "discountPercent": { "type": "integer" },
+        "includesAllModules": { "type": "boolean" },
+        "maxSeatsDefault": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "groupCode", "name", "description", "moduleCodesCsv",
+        "bundlePrice", "discountPercent", "includesAllModules", "maxSeatsDefault",
+        "isActive", "createdAt", "updatedAt"
+      ]
+    },
+    "PromoOfferDoc": {
+      "title": "PromoOfferDoc",
+      "description": "Promotional discount offer applicable to modules, bundles, or renewals.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "code": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "discountPercent": { "type": "integer" },
+        "targetScope": { "type": "string" },
+        "validUntilMillis": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "code", "title", "description", "discountPercent",
+        "targetScope", "validUntilMillis", "isActive", "createdAt", "updatedAt"
+      ]
+    },
+    "VendorLicenseDoc": {
+      "title": "VendorLicenseDoc",
+      "description": "Cryptographically signed vendor license record tracking seat limits and device sharing anomalies.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "licenseKey": { "type": "string" },
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "vendorEmail": { "type": "string" },
+        "scopeName": { "type": "string" },
+        "purchasedSeats": { "type": "integer" },
+        "activeDevicesCsv": { "type": "string" },
+        "activeDeviceCount": { "type": "integer" },
+        "distinctIpCount": { "type": "integer" },
+        "violationStatus": { "type": "string", "enum": ["Compliant", "Warning", "Unauthorized Sharing", "Revoked"] },
+        "lastHeartbeatMillis": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "licenseKey", "vendorId", "vendorName", "vendorEmail", "scopeName",
+        "purchasedSeats", "activeDevicesCsv", "activeDeviceCount", "distinctIpCount",
+        "violationStatus", "lastHeartbeatMillis", "createdAt", "updatedAt"
+      ]
+    },
+    "PaymentTransactionDoc": {
+      "title": "PaymentTransactionDoc",
+      "description": "Online payment gateway checkout record for vendor module purchases and renewals.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "orderRef": { "type": "string" },
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "itemTitle": { "type": "string" },
+        "scopeType": { "type": "string" },
+        "seats": { "type": "integer" },
+        "billingCycle": { "type": "string" },
+        "promoCode": { "type": "string" },
+        "subtotalAmount": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "finalAmount": { "type": "number" },
+        "currency": { "type": "string" },
+        "gatewayMode": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Paid", "Failed"] },
+        "gatewayRef": { "type": "string" },
+        "checkoutUrl": { "type": "string" },
+        "autoRenewEnabled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "orderRef", "vendorId", "vendorName", "itemTitle", "scopeType",
+        "seats", "billingCycle", "promoCode", "subtotalAmount", "discountAmount",
+        "finalAmount", "currency", "gatewayMode", "status", "gatewayRef",
+        "checkoutUrl", "autoRenewEnabled", "createdAt", "updatedAt"
+      ]
+    },
+    "VendorNotificationDoc": {
+      "title": "VendorNotificationDoc",
+      "description": "Append-only log of offer, remaining subscription, auto-renewal, and license security notifications sent to vendors.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "recipientEmail": { "type": "string" },
+        "recipientPhone": { "type": "string" },
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "deliveryChannel": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "vendorId", "vendorName", "recipientEmail", "recipientPhone",
+        "category", "title", "message", "deliveryChannel", "status", "createdAt"
+      ]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Vendor support queue ticket managed by Super Admin.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "ticketCode": { "type": "string" },
+        "title": { "type": "string" },
+        "vendor": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "In progress", "Resolved"] },
+        "priority": { "type": "string", "enum": ["High", "Normal", "Low"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "ticketCode", "title", "vendor", "status", "priority", "createdAt", "updatedAt"]
+    },
+    "AuditLogEntry": {
+      "title": "AuditLogEntry",
+      "description": "Immutable session and administrative action audit entry.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["Success", "Warning", "Blocked"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "message", "status", "createdAt"]
+    },
+    "PlatformSettingDoc": {
+      "title": "PlatformSettingDoc",
+      "description": "Platform security and administrative toggle persisted per admin workspace.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "label": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "label", "enabled", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/vendors/{vendorId}": { "schema": { "$ref": "#/entities/Vendor" } },
+    "/users/{userId}/modules/{moduleId}": { "schema": { "$ref": "#/entities/PlatformModuleDoc" } },
+    "/users/{userId}/moduleGroups/{groupId}": { "schema": { "$ref": "#/entities/ModuleGroupDoc" } },
+    "/users/{userId}/offers/{offerId}": { "schema": { "$ref": "#/entities/PromoOfferDoc" } },
+    "/users/{userId}/licenses/{licenseId}": { "schema": { "$ref": "#/entities/VendorLicenseDoc" } },
+    "/users/{userId}/payments/{paymentId}": { "schema": { "$ref": "#/entities/PaymentTransactionDoc" } },
+    "/users/{userId}/notifications/{notificationId}": { "schema": { "$ref": "#/entities/VendorNotificationDoc" } },
+    "/users/{userId}/tickets/{ticketId}": { "schema": { "$ref": "#/entities/SupportTicket" } },
+    "/users/{userId}/auditLogs/{logId}": { "schema": { "$ref": "#/entities/AuditLogEntry" } },
+    "/users/{userId}/settings/{settingKey}": { "schema": { "$ref": "#/entities/PlatformSettingDoc" } }
+  }
+}

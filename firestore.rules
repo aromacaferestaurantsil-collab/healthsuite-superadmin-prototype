@@ -1,0 +1,417 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidVendor(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.vendorCode is string && data.vendorCode.size() >= 3 && data.vendorCode.size() <= 32 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.city is string && data.city.size() >= 1 && data.city.size() <= 80 &&
+             data.type is string && data.type in ['Hospital', 'Laboratory', 'Pharmacy', 'Clinic'] &&
+             data.plan is string && data.plan in ['Enterprise', 'Growth', 'Starter'] &&
+             data.status is string && data.status in ['Active', 'Pending', 'Suspended'] &&
+             data.adminEmail is string && data.adminEmail.size() <= 140 &&
+             data.billingEmail is string && data.billingEmail.size() <= 140 &&
+             data.phone is string && data.phone.size() <= 32 &&
+             data.address is string && data.address.size() <= 300 &&
+             data.purchasedLicenses is int && data.purchasedLicenses >= 1 && data.purchasedLicenses <= 5000 &&
+             data.activeSeats is int && data.activeSeats >= 0 && data.activeSeats <= 5000 &&
+             data.autoRenew is bool &&
+             data.subscriptionExpiresAtMillis is int && data.subscriptionExpiresAtMillis >= 0 &&
+             data.assignedModulesCsv is string && data.assignedModulesCsv.size() <= 600 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidModule(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.moduleCode is string && data.moduleCode.size() >= 2 && data.moduleCode.size() <= 40 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.description is string && data.description.size() <= 240 &&
+             data.stage is string && data.stage in ['Live', 'Beta', 'Planned'] &&
+             data.monthlyPrice is number && data.monthlyPrice >= 0 && data.monthlyPrice <= 1000000 &&
+             data.annualPrice is number && data.annualPrice >= 0 && data.annualPrice <= 10000000 &&
+             data.currency is string && data.currency.size() >= 3 && data.currency.size() <= 8 &&
+             data.discountPercent is int && data.discountPercent >= 0 && data.discountPercent <= 95 &&
+             data.licenseAllEligible is bool &&
+             data.isActive is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidModuleGroup(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.groupCode is string && data.groupCode.size() >= 2 && data.groupCode.size() <= 40 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.description is string && data.description.size() <= 240 &&
+             data.moduleCodesCsv is string && data.moduleCodesCsv.size() >= 1 && data.moduleCodesCsv.size() <= 600 &&
+             data.bundlePrice is number && data.bundlePrice >= 0 && data.bundlePrice <= 10000000 &&
+             data.discountPercent is int && data.discountPercent >= 0 && data.discountPercent <= 95 &&
+             data.includesAllModules is bool &&
+             data.maxSeatsDefault is int && data.maxSeatsDefault >= 1 && data.maxSeatsDefault <= 5000 &&
+             data.isActive is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidOffer(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.code is string && data.code.size() >= 2 && data.code.size() <= 32 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.description is string && data.description.size() <= 240 &&
+             data.discountPercent is int && data.discountPercent >= 1 && data.discountPercent <= 95 &&
+             data.targetScope is string && data.targetScope.size() >= 1 && data.targetScope.size() <= 60 &&
+             data.validUntilMillis is int && data.validUntilMillis >= 0 &&
+             data.isActive is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidLicense(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.licenseKey is string && data.licenseKey.size() >= 8 && data.licenseKey.size() <= 120 &&
+             data.vendorId is string && data.vendorId.size() >= 1 && data.vendorId.size() <= 128 &&
+             data.vendorName is string && data.vendorName.size() >= 1 && data.vendorName.size() <= 120 &&
+             data.vendorEmail is string && data.vendorEmail.size() <= 140 &&
+             data.scopeName is string && data.scopeName.size() >= 1 && data.scopeName.size() <= 160 &&
+             data.purchasedSeats is int && data.purchasedSeats >= 1 && data.purchasedSeats <= 5000 &&
+             data.activeDevicesCsv is string && data.activeDevicesCsv.size() <= 1000 &&
+             data.activeDeviceCount is int && data.activeDeviceCount >= 0 && data.activeDeviceCount <= 5000 &&
+             data.distinctIpCount is int && data.distinctIpCount >= 0 && data.distinctIpCount <= 5000 &&
+             data.violationStatus is string && data.violationStatus in ['Compliant', 'Warning', 'Unauthorized Sharing', 'Revoked'] &&
+             data.lastHeartbeatMillis is int && data.lastHeartbeatMillis >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPayment(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.orderRef is string && data.orderRef.size() >= 4 && data.orderRef.size() <= 80 &&
+             data.vendorId is string && data.vendorId.size() >= 1 && data.vendorId.size() <= 128 &&
+             data.vendorName is string && data.vendorName.size() >= 1 && data.vendorName.size() <= 120 &&
+             data.itemTitle is string && data.itemTitle.size() >= 1 && data.itemTitle.size() <= 160 &&
+             data.scopeType is string && data.scopeType.size() >= 1 && data.scopeType.size() <= 40 &&
+             data.seats is int && data.seats >= 1 && data.seats <= 5000 &&
+             data.billingCycle is string && data.billingCycle in ['Monthly', 'Annual'] &&
+             data.promoCode is string && data.promoCode.size() <= 40 &&
+             data.subtotalAmount is number && data.subtotalAmount >= 0 &&
+             data.discountAmount is number && data.discountAmount >= 0 &&
+             data.finalAmount is number && data.finalAmount >= 0 &&
+             data.currency is string && data.currency.size() >= 3 && data.currency.size() <= 8 &&
+             data.gatewayMode is string && data.gatewayMode.size() >= 1 && data.gatewayMode.size() <= 40 &&
+             data.status is string && data.status in ['Pending', 'Paid', 'Failed'] &&
+             data.gatewayRef is string && data.gatewayRef.size() <= 140 &&
+             data.checkoutUrl is string && data.checkoutUrl.size() <= 600 &&
+             data.autoRenewEnabled is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidVendorNotification(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.vendorId is string && data.vendorId.size() >= 1 && data.vendorId.size() <= 128 &&
+             data.vendorName is string && data.vendorName.size() >= 1 && data.vendorName.size() <= 120 &&
+             data.recipientEmail is string && data.recipientEmail.size() <= 140 &&
+             data.recipientPhone is string && data.recipientPhone.size() <= 32 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 600 &&
+             data.deliveryChannel is string && data.deliveryChannel.size() >= 1 && data.deliveryChannel.size() <= 80 &&
+             data.status is string && data.status.size() >= 1 && data.status.size() <= 40 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidTicket(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.ticketCode is string && data.ticketCode.size() >= 3 && data.ticketCode.size() <= 32 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+             data.vendor is string && data.vendor.size() >= 1 && data.vendor.size() <= 120 &&
+             data.status is string && data.status in ['Open', 'In progress', 'Resolved'] &&
+             data.priority is string && data.priority in ['High', 'Normal', 'Low'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAuditLog(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 240 &&
+             data.status is string && data.status in ['Success', 'Warning', 'Blocked'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidSetting(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.label is string && data.label.size() >= 1 && data.label.size() <= 120 &&
+             data.enabled is bool &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/vendors/{vendorId} {
+      allow get: if isOwner(userId) && isValidId(vendorId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(vendorId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'vendorCode', 'name', 'city', 'type', 'plan', 'status',
+                         'adminEmail', 'billingEmail', 'phone', 'address',
+                         'purchasedLicenses', 'activeSeats', 'autoRenew', 'subscriptionExpiresAtMillis',
+                         'assignedModulesCsv', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'vendorCode', 'name', 'city', 'type', 'plan', 'status',
+                         'adminEmail', 'billingEmail', 'phone', 'address',
+                         'purchasedLicenses', 'activeSeats', 'autoRenew', 'subscriptionExpiresAtMillis',
+                         'assignedModulesCsv', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidVendor(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(vendorId) &&
+                       isValidVendor(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().vendorCode == existing().vendorCode &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'plan', 'city', 'name', 'type',
+                         'adminEmail', 'billingEmail', 'phone', 'address',
+                         'purchasedLicenses', 'activeSeats', 'autoRenew',
+                         'subscriptionExpiresAtMillis', 'assignedModulesCsv', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(vendorId);
+    }
+
+    match /users/{userId}/modules/{moduleId} {
+      allow get: if isOwner(userId) && isValidId(moduleId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(moduleId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'moduleCode', 'name', 'description', 'stage',
+                         'monthlyPrice', 'annualPrice', 'currency', 'discountPercent',
+                         'licenseAllEligible', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'moduleCode', 'name', 'description', 'stage',
+                         'monthlyPrice', 'annualPrice', 'currency', 'discountPercent',
+                         'licenseAllEligible', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidModule(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(moduleId) &&
+                       isValidModule(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().moduleCode == existing().moduleCode &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'description', 'stage', 'monthlyPrice', 'annualPrice',
+                         'currency', 'discountPercent', 'licenseAllEligible', 'isActive', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(moduleId);
+    }
+
+    match /users/{userId}/moduleGroups/{groupId} {
+      allow get: if isOwner(userId) && isValidId(groupId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(groupId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'groupCode', 'name', 'description', 'moduleCodesCsv',
+                         'bundlePrice', 'discountPercent', 'includesAllModules',
+                         'maxSeatsDefault', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'groupCode', 'name', 'description', 'moduleCodesCsv',
+                         'bundlePrice', 'discountPercent', 'includesAllModules',
+                         'maxSeatsDefault', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidModuleGroup(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(groupId) &&
+                       isValidModuleGroup(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().groupCode == existing().groupCode &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'description', 'moduleCodesCsv', 'bundlePrice',
+                         'discountPercent', 'includesAllModules', 'maxSeatsDefault',
+                         'isActive', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(groupId);
+    }
+
+    match /users/{userId}/offers/{offerId} {
+      allow get: if isOwner(userId) && isValidId(offerId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(offerId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'code', 'title', 'description', 'discountPercent',
+                         'targetScope', 'validUntilMillis', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'code', 'title', 'description', 'discountPercent',
+                         'targetScope', 'validUntilMillis', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidOffer(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(offerId) &&
+                       isValidOffer(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().code == existing().code &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'description', 'discountPercent', 'targetScope',
+                         'validUntilMillis', 'isActive', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(offerId);
+    }
+
+    match /users/{userId}/licenses/{licenseId} {
+      allow get: if isOwner(userId) && isValidId(licenseId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(licenseId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'licenseKey', 'vendorId', 'vendorName', 'vendorEmail', 'scopeName',
+                         'purchasedSeats', 'activeDevicesCsv', 'activeDeviceCount', 'distinctIpCount',
+                         'violationStatus', 'lastHeartbeatMillis', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'licenseKey', 'vendorId', 'vendorName', 'vendorEmail', 'scopeName',
+                         'purchasedSeats', 'activeDevicesCsv', 'activeDeviceCount', 'distinctIpCount',
+                         'violationStatus', 'lastHeartbeatMillis', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidLicense(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(licenseId) &&
+                       isValidLicense(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().licenseKey == existing().licenseKey &&
+                       incoming().vendorId == existing().vendorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'purchasedSeats', 'activeDevicesCsv', 'activeDeviceCount',
+                         'distinctIpCount', 'violationStatus', 'lastHeartbeatMillis', 'updatedAt'
+                       ]);
+      allow delete: if isOwner(userId) && isValidId(licenseId);
+    }
+
+    match /users/{userId}/payments/{paymentId} {
+      allow get: if isOwner(userId) && isValidId(paymentId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(paymentId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'orderRef', 'vendorId', 'vendorName', 'itemTitle', 'scopeType',
+                         'seats', 'billingCycle', 'promoCode', 'subtotalAmount', 'discountAmount',
+                         'finalAmount', 'currency', 'gatewayMode', 'status', 'gatewayRef',
+                         'checkoutUrl', 'autoRenewEnabled', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'orderRef', 'vendorId', 'vendorName', 'itemTitle', 'scopeType',
+                         'seats', 'billingCycle', 'promoCode', 'subtotalAmount', 'discountAmount',
+                         'finalAmount', 'currency', 'gatewayMode', 'status', 'gatewayRef',
+                         'checkoutUrl', 'autoRenewEnabled', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidPayment(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(paymentId) &&
+                       isValidPayment(incoming(), userId) &&
+                       existing().status == 'Pending' &&
+                       incoming().userId == existing().userId &&
+                       incoming().orderRef == existing().orderRef &&
+                       incoming().vendorId == existing().vendorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'gatewayRef', 'checkoutUrl', 'updatedAt'
+                       ]);
+      allow delete: if false;
+    }
+
+    match /users/{userId}/notifications/{notificationId} {
+      allow get: if isOwner(userId) && isValidId(notificationId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(notificationId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'vendorId', 'vendorName', 'recipientEmail', 'recipientPhone',
+                         'category', 'title', 'message', 'deliveryChannel', 'status', 'createdAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'vendorId', 'vendorName', 'recipientEmail', 'recipientPhone',
+                         'category', 'title', 'message', 'deliveryChannel', 'status', 'createdAt'
+                       ]) &&
+                       isValidVendorNotification(incoming(), userId);
+      allow update, delete: if false;
+    }
+
+    match /users/{userId}/tickets/{ticketId} {
+      allow get: if isOwner(userId) && isValidId(ticketId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(ticketId) &&
+                       incoming().keys().hasAll(['userId', 'ticketCode', 'title', 'vendor', 'status', 'priority', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'ticketCode', 'title', 'vendor', 'status', 'priority', 'createdAt', 'updatedAt']) &&
+                       isValidTicket(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(ticketId) &&
+                       isValidTicket(incoming(), userId) &&
+                       existing().status != 'Resolved' &&
+                       incoming().userId == existing().userId &&
+                       incoming().ticketCode == existing().ticketCode &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(ticketId);
+    }
+
+    match /users/{userId}/auditLogs/{logId} {
+      allow get: if isOwner(userId) && isValidId(logId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(logId) &&
+                       incoming().keys().hasAll(['userId', 'message', 'status', 'createdAt']) &&
+                       incoming().keys().hasOnly(['userId', 'message', 'status', 'createdAt']) &&
+                       isValidAuditLog(incoming(), userId);
+      allow update, delete: if false;
+    }
+
+    match /users/{userId}/settings/{settingKey} {
+      allow get: if isOwner(userId) && isValidId(settingKey);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(settingKey) &&
+                       incoming().keys().hasAll(['userId', 'label', 'enabled', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'label', 'enabled', 'updatedAt']) &&
+                       isValidSetting(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(settingKey) &&
+                       isValidSetting(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['enabled', 'label', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(settingKey);
+    }
+  }
+}

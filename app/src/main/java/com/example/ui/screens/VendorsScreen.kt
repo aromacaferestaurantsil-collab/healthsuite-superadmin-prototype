@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,11 +19,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -34,13 +40,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.model.DriveUploadResult
 import com.example.model.Vendor
+import com.example.ui.components.InfoNoticeBox
 import com.example.ui.components.PanelCard
 import com.example.ui.components.VendorTable
 import com.example.ui.theme.ControlBorder
@@ -51,65 +60,117 @@ import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VendorsScreen(
     visibleVendors: List<Vendor>,
+    totalVendorCount: Int,
     searchQuery: String,
     statusFilter: String,
+    planFilter: String,
+    userEmail: String,
+    isDriveUploading: Boolean,
+    lastDriveUpload: DriveUploadResult?,
     onSearchQueryChange: (String) -> Unit,
     onStatusFilterChange: (String) -> Unit,
+    onPlanFilterChange: (String) -> Unit,
     onExportCsv: () -> Unit,
+    onUploadToDrive: () -> Unit,
     onOpenVendor: (Vendor) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val filterOptions = listOf("All", "Active", "Pending", "Suspended")
+    val planOptions = listOf("All", "Enterprise", "Growth", "Starter", "Expiring <=15d")
     var dropdownExpanded by remember { mutableStateOf(false) }
 
     PanelCard(modifier = modifier.testTag("vendors_screen")) {
-        Row(
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
-                Text(
-                    text = "Vendor directory",
-                    color = TextPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = "Review registrations and manage tenant access",
-                    color = TextMuted,
-                    fontSize = 11.5.sp
-                )
-            }
-            OutlinedButton(
-                onClick = onExportCsv,
-                shape = RoundedCornerShape(6.dp),
-                border = BorderStroke(1.dp, ControlBorder),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = SurfaceWhite,
-                    contentColor = TextControl
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                modifier = Modifier
-                    .defaultMinSize(minHeight = 48.dp)
-                    .testTag("export_csv_button")
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Vendor directory",
+                color = TextPrimary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = "Review registrations, manage tenant access, and back up strictly to your own Google Drive (${userEmail.ifBlank { "current user" }})",
+                color = TextMuted,
+                fontSize = 11.5.sp
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(15.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = stringResource(R.string.action_export_csv),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                OutlinedButton(
+                    onClick = onExportCsv,
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(1.dp, ControlBorder),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = SurfaceWhite,
+                        contentColor = TextControl
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .testTag("export_csv_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.action_export_csv),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Button(
+                    onClick = onUploadToDrive,
+                    enabled = !isDriveUploading,
+                    shape = RoundedCornerShape(6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryEmerald,
+                        contentColor = Color.White
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .testTag("upload_drive_button")
+                ) {
+                    if (isDriveUploading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Uploading...", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.CloudUpload,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.action_upload_drive),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
+        }
+
+        if (lastDriveUpload != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            InfoNoticeBox(
+                text = "Uploaded ${lastDriveUpload.fileName} to ${lastDriveUpload.ownerEmail.ifBlank { userEmail }}'s Google Drive (File ID: ${lastDriveUpload.fileId})."
+            )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -161,7 +222,35 @@ fun VendorsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            planOptions.forEach { option ->
+                FilterChip(
+                    selected = planFilter == option,
+                    onClick = { onPlanFilterChange(option) },
+                    label = {
+                        Text(
+                            text = if (option == "All") "All Plans" else option,
+                            fontSize = 11.sp
+                        )
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Showing ${visibleVendors.size} of $totalVendorCount vendor(s) · Tap any vendor for full profile, call & email",
+            color = TextMuted,
+            fontSize = 11.sp
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         VendorTable(
             vendors = visibleVendors,
