@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HealthSuite 360</string>
+    <string name="brand_mark">H</string>
+    <string name="brand_title_prefix">HealthSuite </string>
+    <string name="brand_title_suffix">360</string>
+    <string name="brand_subtitle">PLATFORM CONSOLE</string>
+    <string name="role_super_admin">Super Admin</string>
+    <string name="badge_demo">DEMO</string>
+    <string name="sidebar_footer_access">Platform-level access only</string>
+    <string name="header_user_label">SA  Platform Admin</string>
+    <string name="banner_prototype_prefix">Independent prototype</string>
+    <string name="banner_prototype_body"> · Synthetic data only · No production connections</string>
+    <string name="control_centre_overline">CONTROL CENTRE</string>
+    <string name="control_centre_subtitle">Manage platform operations across HealthSuite 360.</string>
+    <string name="action_add_vendor">Add vendor</string>
+    <string name="action_export_csv">Export CSV</string>
+    <string name="action_details">Details</string>
+    <string name="action_resolve">Resolve</string>
+    <string name="status_resolved">Resolved</string>
+    <string name="footer_title">HealthSuite 360 · Super Admin prototype</string>
+    <string name="footer_disclaimer">Not for production use</string>
+    <string name="cd_open_navigation">Open navigation menu</string>
+    <string name="cd_close_panel">Close</string>
+    <string name="cd_prototype_notice">Prototype notice</string>
+    <string name="cd_role_badge">Super Admin access</string>
+    <string name="cd_lock_badge">Platform-level access</string>
+    <string name="cd_search">Search vendors</string>
+    <string name="cd_toast_check">Confirmed</string>
+    <string name="search_placeholder">Search vendor, ID or city</string>
+    <string name="empty_vendors">No vendors found.</string>
+    <string name="empty_audit_logs">No actions recorded yet.</string>
+    <string name="vendor_profile_overline">VENDOR PROFILE</string>
+    <string name="action_approve_activate">Approve / activate</string>
+    <string name="action_suspend_vendor">Suspend vendor</string>
+    <string name="modal_register_vendor">Register vendor</string>
+    <string name="label_org_name">Organisation name</string>
+    <string name="label_admin_email">Admin email</string>
+    <string name="action_add_to_queue">Add to approval queue</string>
+    <string name="notice_platform_users">Vendor Admin, Doctor, Pharmacist and Staff roles must never grant Super Admin privileges.</string>
+    <string name="notice_releases">Deploy and rollback controls are disabled in this prototype.</string>
+    <string name="notice_settings">Settings are local only and are not persisted to a server.</string>
+</resources>
