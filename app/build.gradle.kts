@@ -16,23 +16,36 @@ android {
         versionName = "0.9.4"
     }
 
-    signingConfigs {
-        create("debugConfig") {
-            storeFile = file("${rootDir}/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+    // Release signing is supplied only by the protected CI environment.
+    // Never sign a distributable release with the Android debug keystore.
+    val releaseStoreFile = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+    val releaseStorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
+    val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+    val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+
+    if (
+        !releaseStoreFile.isNullOrBlank() &&
+        !releaseStorePassword.isNullOrBlank() &&
+        !releaseKeyAlias.isNullOrBlank() &&
+        !releaseKeyPassword.isNullOrBlank()
+    ) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
         }
     }
 
     buildTypes {
-        debug {
-            signingConfig = signingConfigs.getByName("debugConfig")
-        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debugConfig")
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -90,4 +103,6 @@ dependencies {
     implementation(libs.mlkit.barcode.scanning)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    testImplementation(libs.junit)
 }
