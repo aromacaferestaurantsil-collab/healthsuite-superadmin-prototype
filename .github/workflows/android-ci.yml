@@ -47,14 +47,14 @@ jobs:
                   "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
                   "android_client_info": {
                     "package_name": "com.aistudio.healthsuite.kxmpzq"
-                  },
-                  "oauth_client": [
-                    {
-                      "client_id": "000000000000-ci-placeholder.apps.googleusercontent.com",
-                      "client_type": 3
-                    }
-                  ]
+                  }
                 },
+                "oauth_client": [
+                  {
+                    "client_id": "000000000000-ci-placeholder.apps.googleusercontent.com",
+                    "client_type": 3
+                  }
+                ],
                 "api_key": [
                   {
                     "current_key": "CI_ONLY_NOT_A_REAL_FIREBASE_KEY"
